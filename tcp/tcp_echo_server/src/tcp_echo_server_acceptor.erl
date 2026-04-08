@@ -6,7 +6,7 @@
 -export([init/1, handle_call/3, handle_cast/2, start_link/1, handle_info/2]).
 
 init(Args) ->
-    {ok, Port} = lists:keyfind(port, 1, Args),
+    {port, Port} = lists:keyfind(port, 1, Args),
     ListenOptions = [
         binary,
         {active, true},
@@ -43,7 +43,7 @@ handle_info(accept, ListenSocket) ->
     end.
 
 %% Callback module
--spec start_link(proplists:proplist()) -> gen_server:start_ret().
+-spec start_link(Options :: proplists:proplist()) -> gen_server:start_ret().
 start_link(Options) ->
     gen_server:start_link(?MODULE, Options, []).
 
@@ -55,6 +55,6 @@ start_link(Options) ->
 -ifdef(TEST).
 -include_lib("eunit/include/eunit.hrl").
     start_link_args_test() ->
-        ?AssertMatch({ok, _}, start_link([{port, 8080}])).
+        ?assertMatch({ok, _}, start_link([{port, 0}])).
 -endif.
 
