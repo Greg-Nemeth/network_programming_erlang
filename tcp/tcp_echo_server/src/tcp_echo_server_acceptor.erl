@@ -31,7 +31,7 @@ handle_cast(Request,State) ->
 handle_info(accept, ListenSocket) ->
     case gen_tcp:accept(ListenSocket, 2_000) of
         {ok, Socket} ->
-            {ok, Pid} = tcp_echo_server_connection:start_link(socket),
+            {ok, Pid} = tcp_echo_server_connection:start_link(Socket),
             ok = gen_tcp:controlling_process(Socket, Pid),
             self() ! accept,
             {noreply, ListenSocket};

@@ -31,7 +31,16 @@ init([]) ->
         intensity => 0,
         period => 1
     },
-    ChildSpecs = [],
+    ChildSpecs = [
+        #{id => acceptor,       % mandatory
+          start => {
+            tcp_echo_server_acceptor, start_link, [[{port, 4000}]]
+          },      % mandatory
+          %% restart => restart(),   % optional
+          %% shutdown => shutdown(), % optional
+          type => worker,       % optional
+          modules => [tcp_echo_server_acceptor]}
+    ],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions
