@@ -16,6 +16,7 @@ init(Socket) ->
     {ok, State}.
 
 handle_info({tcp, Socket, Data}, #state{socket = Socket} = State) ->
+    ok = inet:setopts(Socket, [{active, once}]),
     ConcatData = State#state{
         buffer = <<Data/binary, (State#state.buffer)/binary>>
     },

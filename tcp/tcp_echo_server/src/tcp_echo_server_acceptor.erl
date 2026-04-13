@@ -9,7 +9,7 @@ init(Args) ->
     {port, Port} = lists:keyfind(port, 1, Args),
     ListenOptions = [
         binary,
-        {active, true},
+        {active, once},
         {exit_on_close, false},
         {reuseaddr, true},
         {backlog, 25}
