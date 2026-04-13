@@ -15,13 +15,14 @@ init(Socket) ->
     State = #state{socket = Socket},
     {ok, State}.
 
-handle_info({tcp, Socket, Data}, #state{socket = Socket} = State) ->
+handle_info({tcp, Socket, Line}, #state{socket = Socket} = State) ->
     ok = inet:setopts(Socket, [{active, once}]),
-    ConcatData = State#state{
-        buffer = <<Data/binary, (State#state.buffer)/binary>>
-    },
-    NewState = handle_new_data(ConcatData),
-    {noreply, NewState};
+    %% ConcatData = State#state{
+    %%     buffer = <<Line/binary, (State#state.buffer)/binary>>
+    %% },
+    %% NewState = handle_new_data(ConcatData),
+    ok = gen_tcp:send(Socket, Line),
+    {noreply, State};
 
 handle_info({tcp_closed, Socket}, #state{socket = Socket} = State) ->
     {stop, normal, State};

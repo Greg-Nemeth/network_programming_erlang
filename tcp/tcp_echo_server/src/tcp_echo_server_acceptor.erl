@@ -12,6 +12,7 @@ init(Args) ->
         {active, once},
         {exit_on_close, false},
         {reuseaddr, true},
+        {packet, line},
         {backlog, 25}
     ],
     case gen_tcp:listen(Port, ListenOptions) of
