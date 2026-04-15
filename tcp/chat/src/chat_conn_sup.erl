@@ -1,0 +1,24 @@
+-module(chat_conn_sup).
+-behaviour(supervisor).
+
+%% Callbacks for `supervisor`
+-export([init/1, start_child/2, start_link/0]).
+
+
+-spec start_link() -> supervisor:startlink_ret().
+start_link() ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+
+start_child(Socket, SupRef) ->
+    [{active, Active} , _Rest] = supervisor:count_children(SupRef),
+    supervisor:start_child(?MODULE, [Socket, Active]).
+
+
+init([]) ->
+    SupFlags = #{strategy => simple_one_for_one, intensity => 5, period => 10},
+    ChildSpecs = [#{
+        id => chat_connection,
+        start => {chat_connection, start_link, []},
+        restart => temporary
+    }],
+    {ok, {SupFlags, ChildSpecs}}.

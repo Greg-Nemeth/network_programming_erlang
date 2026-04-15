@@ -1,9 +1,7 @@
-%%%-------------------------------------------------------------------
-%% @doc chat top level supervisor.
-%% @end
-%%%-------------------------------------------------------------------
-
 -module(chat_sup).
+-moduledoc """
+chat top level supervisor.
+""".
 
 -behaviour(supervisor).
 
@@ -31,7 +29,13 @@ init([]) ->
         intensity => 0,
         period => 1
     },
-    ChildSpecs = [],
+    ChildSpecs = [
+        #{
+            id => chat_acceptor,
+            start => [chat_acceptor, start_link, [{port, 4000}]],
+            modules => [chat_acceptor]
+        }
+    ],
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions

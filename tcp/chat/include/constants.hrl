@@ -1,0 +1,1 @@
+-define(CONN_LIMIT, 25).
