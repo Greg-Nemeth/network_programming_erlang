@@ -2,8 +2,12 @@
 -include_lib("kernel/include/logger.hrl").
 -behaviour(gen_server).
 
--export([handle_cast/2,handle_info/2,  init/1, handle_call/3]).
+-export([handle_cast/2,handle_info/2,  init/1, handle_call/3, start_link/1]).
 -record(state, {listen_socket :: gen_tcp:socket(), supervisor :: pid()}).
+
+-spec start_link(Opts :: proplists:proplist()) -> gen_server:start_ret().
+start_link(Opts) ->
+    gen_server:start_link(?MODULE, Opts, []).
 
 init(Args) ->
     {port, Port} = lists:keyfind(port, 1, Args),

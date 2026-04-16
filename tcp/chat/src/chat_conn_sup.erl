@@ -10,7 +10,7 @@ start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 start_child(Socket, SupRef) ->
-    [{active, Active} , _Rest] = supervisor:count_children(SupRef),
+    {active, Active} = lists:keyfind(active, 1, supervisor:count_children(SupRef)) ,
     supervisor:start_child(?MODULE, [Socket, Active]).
 
 

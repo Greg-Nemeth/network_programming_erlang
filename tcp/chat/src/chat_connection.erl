@@ -2,7 +2,7 @@
 -include("constants.hrl").
 -include("types.hrl").
 -include_lib("kernel/include/logger.hrl").
--export([start_link/2, init/1, handle_cast/2]).
+-export([start_link/2, init/1, handle_info/2]).
 -behaviour(gen_server).
 -record(connection, {socket        :: gen_tcp:socket()    ,
                      username      :: binary() | undefined,
@@ -17,7 +17,7 @@ init(Socket) ->
     {ok, #connection{socket = Socket}}.
 
 
-handle_cast({tcp, Socket, Data}, #connection{buffer = Buffer} = State) ->
+handle_info({tcp, Socket, Data}, #connection{buffer = Buffer} = State) ->
     NewState = State#connection{buffer = <<Data/binary, Buffer/binary>>},
     ok = inet:setopts(Socket, [{active, once}]),
     handle_new_data(NewState).
@@ -27,7 +27,7 @@ handle_new_data(#connection{buffer = Buffer} = State) ->
         {ok, Message, Rest} ->
             NewState = State#connection{buffer = Rest},
             case handle_message(Message, NewState) of
-                {ok, State} -> handle_new_data(NewState);
+                {ok, UpdatedState} -> handle_new_data(UpdatedState);
                 error -> {stop, normal, NewState}
             end;
         incomplete ->

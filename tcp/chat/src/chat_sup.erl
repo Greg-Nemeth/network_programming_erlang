@@ -32,7 +32,7 @@ init([]) ->
     ChildSpecs = [
         #{
             id => chat_acceptor,
-            start => [chat_acceptor, start_link, [{port, 4000}]],
+            start => {chat_acceptor, start_link, [[{port, 4000}]]},
             modules => [chat_acceptor]
         }
     ],
