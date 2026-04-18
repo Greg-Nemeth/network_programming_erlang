@@ -34,6 +34,16 @@ init([]) ->
             id => chat_acceptor,
             start => {chat_acceptor, start_link, [[{port, 4000}]]},
             modules => [chat_acceptor]
+        },
+        #{
+            id => chat_registry,
+            start => {chat_registry, start_link, []},
+            modules => [chat_registry]
+        },
+        #{
+            id => chat_clients,
+            start => {pg, start_link, [chat_clients]},
+            type => worker
         }
     ],
     {ok, {SupFlags, ChildSpecs}}.

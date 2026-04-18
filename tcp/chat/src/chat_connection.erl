@@ -4,9 +4,10 @@
 -include_lib("kernel/include/logger.hrl").
 -export([start_link/2, init/1, handle_info/2]).
 -behaviour(gen_server).
--record(connection, {socket        :: gen_tcp:socket()    ,
-                     username      :: binary() | undefined,
-                     buffer = <<>> :: binary()          }).
+-record(connection, {socket          :: gen_tcp:socket(),
+                     username = <<>> :: binary()        ,
+                     buffer   = <<>> :: binary()
+                    }).
 
 -spec start_link(Socket :: gen_tcp:socket(), Active :: non_neg_integer()) -> gen_server:start_ret().
 start_link(Socket, Active) when Active < ?CONN_LIMIT ->
@@ -16,11 +17,19 @@ start_link(_, Active) -> erlang:error(io:format("Connection Limit Reached! ~p", 
 init(Socket) ->
     {ok, #connection{socket = Socket}}.
 
-
+handle_info({broadcast, #broadcast{} = Message}, State) ->
+    EncodedMsg = chat_protocol:encode_message(Message),
+    ok = gen_tcp:send(State#connection.socket, EncodedMsg),
+    {noreply, State};
 handle_info({tcp, Socket, Data}, #connection{buffer = Buffer} = State) ->
     NewState = State#connection{buffer = <<Data/binary, Buffer/binary>>},
     ok = inet:setopts(Socket, [{active, once}]),
-    handle_new_data(NewState).
+    handle_new_data(NewState);
+handle_info({tcp_closed, Socket}, #connection{socket = Socket} = State) ->
+    {stop, normal, State};
+handle_info({tcp_error, Socket, Reason}, #connection{socket = Socket} = State) ->
+    ?LOG_ERROR("TCP connection error: ~w", Reason),
+    {stop, normal, State}.
 
 handle_new_data(#connection{buffer = Buffer} = State) ->
     case chat_protocol:decode_message(Buffer) of
@@ -37,9 +46,20 @@ handle_new_data(#connection{buffer = Buffer} = State) ->
             {stop, normal, State}
     end.
 
-handle_message(#register{username = Username}, #connection{username = undefined}= State) ->
+handle_message(#register{username = Username}, #connection{username =  <<>>} = State) ->
+    ok = chat_registry:register_client(self()),
+    ok = chat_registry:register_user(Username, self()),
     {ok, State#connection{username = Username}};
 handle_message(#register{}, _State) ->
     ?LOG_ERROR("Invalid Register message, had already received one"),
-    error.
+    error;
+handle_message(#broadcast{}, #connection{username = <<>>}) ->
+    ?LOG_ERROR("Invalid Broadcast message, had not received a Register"),
+    error;
+handle_message(#broadcast{} = Message, State) ->
+    Sender = self(),
+    MessageWithUser = Message#broadcast{from_username = State#connection.username },
+    chat_registry:broadcast_message(MessageWithUser, Sender),
+    {ok, State}.
+    
 
