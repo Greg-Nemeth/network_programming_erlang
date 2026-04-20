@@ -2,12 +2,8 @@
 -behaviour(supervisor).
 
 %% Callbacks for `supervisor`
--export([init/1, start_child/2, start_link/0]).
+-export([init/1, start_child/2]).
 
-
--spec start_link() -> supervisor:startlink_ret().
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 start_child(Socket, SupRef) ->
     {active, Active} = lists:keyfind(active, 1, supervisor:count_children(SupRef)) ,

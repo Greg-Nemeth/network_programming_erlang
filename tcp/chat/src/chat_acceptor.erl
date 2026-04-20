@@ -20,14 +20,17 @@ init(Args) ->
         {backlog, 25}
     ],
 
-    {ok, Sup} = chat_conn_sup:start_link(),
+    maybe
+        Sup = whereis(chat_conn_sup),
+        true ?= is_pid(Sup),
 
-    case gen_tcp:listen(Port, ListenOptions) of
-        {ok, ListenSocket} ->
-            ?LOG_INFO("Started chat server on port ~p", [Port]),
-            gen_server:cast(self(), accept),
-            {ok, #state{listen_socket = ListenSocket, supervisor = Sup}};
-        {error, Reason} -> {stop, Reason}
+        case gen_tcp:listen(Port, ListenOptions) of
+            {ok, ListenSocket} ->
+                ?LOG_INFO("Started chat server on port ~p", [Port]),
+                gen_server:cast(self(), accept),
+                {ok, #state{listen_socket = ListenSocket, supervisor = Sup}};
+            {error, Reason} -> {stop, Reason}
+        end
     end.
 
 handle_cast(accept, #state{listen_socket = ListenSocket, supervisor = Sup} = State) ->

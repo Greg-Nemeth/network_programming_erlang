@@ -47,8 +47,7 @@ handle_new_data(#connection{buffer = Buffer} = State) ->
     end.
 
 handle_message(#register{username = Username}, #connection{username =  <<>>} = State) ->
-    ok = chat_registry:register_client(self()),
-    ok = chat_registry:register_user(Username, self()),
+    ok = chat_registry:register(Username, self()),
     {ok, State#connection{username = Username}};
 handle_message(#register{}, _State) ->
     ?LOG_ERROR("Invalid Register message, had already received one"),
