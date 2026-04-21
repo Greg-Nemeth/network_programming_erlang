@@ -1,11 +1,12 @@
-{application, chat, [
+{application, chat_client, [
     {description, "An OTP application"},
     {vsn, "0.1.0"},
     {registered, []},
-    {mod, {chat_app, []}},
+    {mod, {chat_client_app, []}},
     {applications, [
         kernel,
-        stdlib
+        stdlib,
+        chat_proto
     ]},
     {env, []},
     {modules, []},

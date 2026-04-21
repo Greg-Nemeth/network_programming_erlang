@@ -1,7 +1,7 @@
--module(chat_registry).
+-module(chat_server_registry).
 
 -behaviour(gen_server).
--include("types.hrl").
+-include_lib("chat_proto/include/types.hrl").
 -include_lib("kernel/include/logger.hrl").
 
 %% Callbacks for `gen_server`

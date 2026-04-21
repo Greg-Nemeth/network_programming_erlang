@@ -1,4 +1,4 @@
--module(chat_conn_sup).
+-module(chat_server_conn_sup).
 -behaviour(supervisor).
 
 %% Callbacks for `supervisor`

@@ -3,7 +3,7 @@
 %% @end
 %%%-------------------------------------------------------------------
 
--module(chat_app).
+-module(chat_server_app).
 
 -behaviour(application).
 

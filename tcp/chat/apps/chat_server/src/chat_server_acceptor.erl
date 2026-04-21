@@ -1,4 +1,4 @@
--module(chat_acceptor).
+-module(chat_server_acceptor).
 -include_lib("kernel/include/logger.hrl").
 -behaviour(gen_server).
 

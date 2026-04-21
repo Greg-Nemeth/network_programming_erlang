@@ -1,6 +1,6 @@
--module(chat_connection).
--include("constants.hrl").
--include("types.hrl").
+-module(chat_server_connection).
+-include_lib("chat_proto/include/constants.hrl").
+-include_lib("chat_proto/include/types.hrl").
 -include_lib("kernel/include/logger.hrl").
 -export([start_link/2, init/1, handle_info/2]).
 -behaviour(gen_server).
@@ -47,7 +47,7 @@ handle_new_data(#connection{buffer = Buffer} = State) ->
     end.
 
 handle_message(#register{username = Username}, #connection{username =  <<>>} = State) ->
-    ok = chat_registry:register(Username, self()),
+    ok = chat_server_registry:register(Username, self()),
     {ok, State#connection{username = Username}};
 handle_message(#register{}, _State) ->
     ?LOG_ERROR("Invalid Register message, had already received one"),
@@ -58,7 +58,7 @@ handle_message(#broadcast{}, #connection{username = <<>>}) ->
 handle_message(#broadcast{} = Message, State) ->
     Sender = self(),
     MessageWithUser = Message#broadcast{from_username = State#connection.username },
-    chat_registry:broadcast_message(MessageWithUser, Sender),
+    chat_server_registry:broadcast_message(MessageWithUser, Sender),
     {ok, State}.
     
 

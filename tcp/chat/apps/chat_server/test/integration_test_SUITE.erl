@@ -1,6 +1,6 @@
 -module(integration_test_SUITE).
 -include_lib("common_test/include/ct.hrl").
--include("types.hrl").
+-include_lib("chat_proto/include/types.hrl").
 -export([
     server_closes_conn_on_duplicate_register/1,
     broadcast_messages/1, all/0, init_per_suite/1, end_per_suite/1, log/2
@@ -12,7 +12,7 @@ all() -> [
 ].
 
 init_per_suite(Config) ->
-    {ok, _} = application:ensure_all_started(chat),
+    {ok, _} = application:ensure_all_started(chat_server),
     CaptureLog = fun(Func, Timeout) ->
         HandlerId = capture_handler,
         Tester = self(),
@@ -31,7 +31,7 @@ init_per_suite(Config) ->
     [{capture_log, CaptureLog} | Config].
 
 end_per_suite(_Config) ->
-    application:stop(chat).
+    application:stop(chat_server).
 
 server_closes_conn_on_duplicate_register(Config) ->
     CaptureLog = ?config(capture_log, Config),
@@ -78,6 +78,7 @@ spy_messages(Map, Fun, Timeout) ->
     Tester = self(),
     Pids = [Pid || _User := {Pid, _Socket} <- Map],
     
+    Deadline = erlang:monotonic_time(millisecond) + Timeout,
     %% Set up tracing for 'receive' events
     [erlang:trace(Pid, true, ['receive', {tracer, Tester}]) || Pid <- Pids],
     
@@ -85,27 +86,39 @@ spy_messages(Map, Fun, Timeout) ->
     PidToUser = maps:from_list([{Pid, User} || User := {Pid, _Socket} <- Map]),
     
     Fun(),
-    Logs = collect_trace_messages(Timeout, PidToUser, []),
+    Logs = collect_trace_messages(Deadline, PidToUser, []),
     
     %% Disable tracing
     [erlang:trace(Pid, false, ['receive']) || Pid <- Pids],
     Logs.
 
-collect_trace_messages(Timeout, PidToUser, Acc) ->
-    receive
-        {trace, Pid, 'receive', Msg} ->
-            IsMatch = is_tuple(Msg) andalso (tuple_size(Msg) >= 1) andalso
-                      (element(1, Msg) =:= tcp orelse element(1, Msg) =:= broadcast),
-            case {maps:find(Pid, PidToUser), IsMatch} of
-                {{ok, Username}, true} ->
-                    collect_trace_messages(Timeout, PidToUser, [{Username, Msg} | Acc]);
-                _ ->
-                    collect_trace_messages(Timeout, PidToUser, Acc)
-            end;
-        {trace, _Pid, _OtherType, _Data} ->
-            collect_trace_messages(Timeout, PidToUser, Acc)
-    after Timeout ->
-        lists:reverse(Acc)
+collect_trace_messages(Deadline, PidToUser, Acc) ->
+    Now = erlang:monotonic_time(millisecond),
+    Remaining = Deadline - Now,
+    case Remaining > 0 of
+    true ->
+        receive
+            {trace, Pid, 'receive', Msg} ->
+                IsMatch = is_tuple(Msg) andalso (tuple_size(Msg) >= 1) andalso
+                          (element(1, Msg) =:= tcp orelse element(1, Msg) =:= broadcast),
+                case {maps:find(Pid, PidToUser), IsMatch} of
+                    {{ok, Username}, true} ->
+                        collect_trace_messages(Deadline, PidToUser, [{Username, Msg} | Acc]);
+                    _ ->
+                        collect_trace_messages(Deadline, PidToUser, Acc)
+                end;
+            {trace, _Pid, _OtherType, _Data} ->
+                collect_trace_messages(Deadline, PidToUser, Acc)
+        after Remaining ->
+            lists:reverse(Acc)
+        end;
+    false ->
+        receive
+            {trace, Pid, 'receive', Msg} ->
+                lists:reverse(Acc)
+        after 0 ->
+            lists:reverse(Acc)
+        end
     end.
 
 

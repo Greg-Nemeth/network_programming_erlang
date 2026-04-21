@@ -1,4 +1,4 @@
--module(chat_sup).
+-module(chat_server_sup).
 -moduledoc """
 chat top level supervisor.
 """.

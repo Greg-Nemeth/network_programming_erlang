@@ -1,0 +1,15 @@
+{application, chat_proto, [
+    {description, "An OTP application"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {mod, {chat_app, []}},
+    {applications, [
+        kernel,
+        stdlib,
+        chat_proto
+    ]},
+    {env, []},
+    {modules, []},
+    {licenses, ["Apache-2.0"]},
+    {links, []}
+ ]}.
