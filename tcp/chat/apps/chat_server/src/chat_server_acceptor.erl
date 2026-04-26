@@ -3,7 +3,7 @@
 -behaviour(gen_server).
 
 -export([handle_cast/2,handle_info/2,  init/1, handle_call/3, start_link/1]).
--record(state, {listen_socket :: gen_tcp:socket(), supervisor :: pid()}).
+-record(state, {listen_socket :: gen_tcp:socket()}).
 
 -spec start_link(Opts :: proplists:proplist()) -> gen_server:start_ret().
 start_link(Opts) ->
@@ -20,23 +20,19 @@ init(Args) ->
         {backlog, 25}
     ],
 
-    maybe
-        Sup = whereis(chat_conn_sup),
-        true ?= is_pid(Sup),
 
-        case gen_tcp:listen(Port, ListenOptions) of
-            {ok, ListenSocket} ->
-                ?LOG_INFO("Started chat server on port ~p", [Port]),
-                gen_server:cast(self(), accept),
-                {ok, #state{listen_socket = ListenSocket, supervisor = Sup}};
-            {error, Reason} -> {stop, Reason}
-        end
+    case gen_tcp:listen(Port, ListenOptions) of
+        {ok, ListenSocket} ->
+            ?LOG_INFO("Started chat server on port ~p", [Port]),
+            gen_server:cast(self(), accept),
+            {ok, #state{listen_socket = ListenSocket}};
+        {error, Reason} -> {stop, Reason}
     end.
 
-handle_cast(accept, #state{listen_socket = ListenSocket, supervisor = Sup} = State) ->
+handle_cast(accept, #state{listen_socket = ListenSocket} = State) ->
     case gen_tcp:accept(ListenSocket, 2000) of
         {ok, Socket} ->
-            {ok, Pid} = chat_conn_sup:start_child(Socket,Sup),
+            {ok, Pid} = chat_server_conn_sup:start_child(Socket),
             ok = gen_tcp:controlling_process(Socket, Pid),
             gen_server:cast(self(), accept),
             {noreply, State};

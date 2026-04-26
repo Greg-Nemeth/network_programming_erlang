@@ -36,18 +36,18 @@ init([]) ->
             type => worker
         },
         #{
-            id => chat_conn_sup,
-            start => {supervisor, start_link,[{local, chat_conn_sup}, chat_conn_sup, []]}
+            id => chat_server_conn_sup,
+            start => {supervisor, start_link,[{local, chat_server_conn_sup}, chat_server_conn_sup, []]}
         },
         #{
-            id => chat_registry,
-            start => {chat_registry, start_link, []},
-            modules => [chat_registry]
+            id => chat_server_registry,
+            start => {chat_server_registry, start_link, []},
+            modules => [chat_server_registry]
         },
         #{
-            id => chat_acceptor,
-            start => {chat_acceptor, start_link, [[{port, 4000}]]},
-            modules => [chat_acceptor]
+            id => chat_server_acceptor,
+            start => {chat_server_acceptor, start_link, [[{port, 4000}]]},
+            modules => [chat_server_acceptor]
         }
     ],
     {ok, {SupFlags, ChildSpecs}}.

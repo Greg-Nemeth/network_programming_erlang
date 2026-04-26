@@ -2,7 +2,7 @@
 -include_lib("chat_proto/include/constants.hrl").
 -include_lib("chat_proto/include/types.hrl").
 -include_lib("kernel/include/logger.hrl").
--export([start_link/2, init/1, handle_info/2]).
+-export([start_link/2, init/1, handle_info/2, handle_call/3, handle_cast/2]).
 -behaviour(gen_server).
 -record(connection, {socket          :: gen_tcp:socket(),
                      username = <<>> :: binary()        ,
@@ -22,7 +22,7 @@ handle_info({broadcast, #broadcast{} = Message}, State) ->
     ok = gen_tcp:send(State#connection.socket, EncodedMsg),
     {noreply, State};
 handle_info({tcp, Socket, Data}, #connection{buffer = Buffer} = State) ->
-    NewState = State#connection{buffer = <<Data/binary, Buffer/binary>>},
+    NewState = State#connection{buffer = <<Buffer/binary, Data/binary>>},
     ok = inet:setopts(Socket, [{active, once}]),
     handle_new_data(NewState);
 handle_info({tcp_closed, Socket}, #connection{socket = Socket} = State) ->
@@ -30,6 +30,15 @@ handle_info({tcp_closed, Socket}, #connection{socket = Socket} = State) ->
 handle_info({tcp_error, Socket, Reason}, #connection{socket = Socket} = State) ->
     ?LOG_ERROR("TCP connection error: ~w", Reason),
     {stop, normal, State}.
+
+
+handle_call(Request,_From,State) ->
+    ?LOG_ERROR("~p", Request),
+    {reply, {error, unknown_call}, State}.
+
+handle_cast(Request,State) ->
+    ?LOG_ERROR("~p", Request),
+    {noreply, State}.
 
 handle_new_data(#connection{buffer = Buffer} = State) ->
     case chat_protocol:decode_message(Buffer) of

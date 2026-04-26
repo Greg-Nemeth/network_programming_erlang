@@ -38,6 +38,7 @@ handle_call({register, Username, Address},_From,State) ->
     case ets:insert_new(chat_users, {Username, Address}) of
     true ->
         ok = pg:join(chat_clients, broadcast, Address),
+        ?LOG_INFO("User registered: ~p", [Username]),
         {reply, ok, State};
     false -> {reply, {error, username_taken}, State}
     end;
@@ -49,11 +50,11 @@ handle_call({dispatch, #broadcast{} = Message, Sender}, _From, State) ->
     {reply, ok, State}.
 
 handle_info({Ref, join, Group, Pids}, #state{group_ref = Ref} = State) ->
-    ?LOG_INFO("Client joined ~p with Pid: ~p", [Group, Pids]),
+    ?LOG_INFO("Clients joined ~p with Pids: ~p", [Group, Pids]),
     {noreply, State};
-handle_info({Ref, leave, Group, [Pid]}, #state{group_ref = Ref} = State) ->
-    ?LOG_INFO("User with Pid: ~p removed from ~p group", [Pid, Group]),
-    ets:match_delete(chat_users, {'_', Pid}),
+handle_info({Ref, leave, Group, Pids}, #state{group_ref = Ref} = State) ->
+    ?LOG_INFO("Users with Pids: ~p removed from ~p group", [Pids, Group]),
+    [ets:match_delete(chat_users, {'_', Pid}) || Pid <- Pids],
     {noreply, State}.
 
 handle_cast(_Request,_State) ->
