@@ -1,5 +1,4 @@
 -module(chat_server_connection).
--include_lib("chat_proto/include/constants.hrl").
 -include_lib("chat_proto/include/types.hrl").
 -include_lib("kernel/include/logger.hrl").
 -export([start_link/2, init/1, handle_info/2, handle_call/3, handle_cast/2]).
@@ -10,9 +9,8 @@
                     }).
 
 -spec start_link(Socket :: gen_tcp:socket(), Active :: non_neg_integer()) -> gen_server:start_ret().
-start_link(Socket, Active) when Active < ?CONN_LIMIT ->
-  gen_server:start_link(?MODULE, Socket, []);
-start_link(_, Active) -> erlang:error(io:format("Connection Limit Reached! ~p", [Active])).
+start_link(Socket, _Active) ->
+  gen_server:start_link(?MODULE, Socket, []).
 
 init(Socket) ->
     {ok, #connection{socket = Socket}}.

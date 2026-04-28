@@ -12,7 +12,12 @@ all() -> [
 ].
 
 init_per_suite(Config) ->
-    {ok, _} = application:ensure_all_started(chat_server),
+    App = case os:getenv("TYPE") of
+        "POOL" -> chat_acceptor_pool;
+        "THOUSAND_ISLAND" -> chat_thousand_island;
+        false -> chat_server
+    end,
+    {ok, _} = application:ensure_all_started(App),
     CaptureLog = fun(Func, Timeout) ->
         HandlerId = capture_handler,
         Tester = self(),
