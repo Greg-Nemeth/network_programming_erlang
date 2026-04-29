@@ -1,4 +1,5 @@
 -module(chat_acceptor_pool_acceptor_supervisor).
+-include_lib("kernel/include/logger.hrl").
 -behaviour(supervisor).
 
 %% Callbacks for `supervisor`
@@ -9,15 +10,22 @@ start_link(Options) ->
     supervisor:start_link(?MODULE, Options).
 
 init(Args) ->
-    {pool_size, PoolSize} = lists:keyfind(pool_size, 1, Args),
+    PoolSize = proplists:get_value(pool_size, Args, 10),
+    ?LOG_ALERT("---------- args in acceptor sup : ~p   ------------", [Args]),
     {listen_socket, ListenSocket} = lists:keyfind(listen_socket, 1, Args),
-    erlang:error(not_implemented),
+   
 
     ChildSpecs = [#{
-        id => io_lib:format("acceptor-#~p", [Idx]),
-        start => {chat_acceptor_pool_acceptor, start_link, [{listen_socket, ListenSocket}]}
-        } || Idx <:- lists:seq(1, PoolSize)],
+        id => list_to_atom("acceptor_" ++ integer_to_list(Idx)),
+        start => {chat_acceptor_pool_acceptor, start_link, [ListenSocket]},
+        restart => transient,
+        type => worker
+        } || Idx <- lists:seq(1, PoolSize)],
 
-    {ok, {ChildSpecs}}.
+    SupFlags = #{
+        strategy => one_for_one,
+        intensity => 5,
+        period => 10
+    },
 
-
+    {ok, {SupFlags, ChildSpecs}}.

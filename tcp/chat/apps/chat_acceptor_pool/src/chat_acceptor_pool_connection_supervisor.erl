@@ -2,7 +2,7 @@
 -behaviour(supervisor).
 
 %% Callbacks for `supervisor`
--export([init/1, start_link/1, start_connection/1]).
+-export([init/1, start_link/0, start_connection/1]).
 
 %% sup_flags() = #{strategy => strategy(),         % optional
 %%                 intensity => non_neg_integer(), % optional
@@ -13,14 +13,14 @@
 %%                  shutdown => shutdown(), % optional
 %%                  type => worker(),       % optional
 %%                  modules => modules()}   % optional
--spec start_link(Options :: proplists:proplist()) -> supervisor:startlink_ret().
-start_link(Options) ->
-    supervisor:start_link({local, ?MODULE},?MODULE, Options).
+-spec start_link() -> supervisor:startlink_ret().
+start_link() ->
+    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 start_connection(Socket) ->
-    supervisor:start_child(?MODULE, [Socket]).
+    supervisor:start_child(?MODULE, [Socket, 0]).
 
-init(_Options) ->
+init([]) ->
     SupFlags = #{strategy => simple_one_for_one},
     ChildSpec = [
         #{
@@ -29,4 +29,4 @@ init(_Options) ->
             restart => temporary
         }
     ],
-    {ok, SupFlags, ChildSpec}.
+    {ok, {SupFlags, ChildSpec}}.

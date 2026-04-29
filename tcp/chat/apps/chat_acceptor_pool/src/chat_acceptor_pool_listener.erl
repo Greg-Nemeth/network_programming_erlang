@@ -29,7 +29,12 @@ init({Options, Sup}) ->
 handle_continue(start_acceptor_pool, {ListenSocket, Sup}) ->
     Spec = #{
         id => chat_acceptor_pool_acceptor_supervisor,
-        start => {chat_acceptor_pool_acceptor_supervisor, start_link, [{listen_socket, ListenSocket}]},
+        start => {chat_acceptor_pool_acceptor_supervisor, start_link, [
+            [
+                {listen_socket, ListenSocket},
+                {pool_size, 10}
+            ]
+        ]},
         type => supervisor
     },
 

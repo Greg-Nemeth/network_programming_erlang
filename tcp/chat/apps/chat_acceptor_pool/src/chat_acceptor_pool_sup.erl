@@ -31,6 +31,11 @@ init([]) ->
     },
     ChildSpecs = [
         #{
+            id => chat_clients,
+            start => {pg, start_link, [chat_clients]},
+            type => worker
+        },
+        #{
             id => chat_server_registry,
             start => {chat_server_registry, start_link, []},
             modules => [chat_server_registry]
